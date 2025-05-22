@@ -1,12 +1,12 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import AppNavigator from './navigation/AppNavigator';
-import BottomNavigator from './navigation/BottomNavigator';
+import Router from './assets/navigation/Router';
+// import BottomNavigator from './assets/navigation/BottomNavigator2';
 
 const App = () => {
   return (
     <NavigationContainer>
-      <BottomNavigator />
+      <Router />
     </NavigationContainer>
   );
 };
