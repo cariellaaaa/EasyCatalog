@@ -1,14 +1,10 @@
-import React from 'react';
+import * as React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import AppNavigator from './navigation/AppNavigator';
-import BottomNavigator from './navigation/BottomNavigator';
-
-const App = () => {
+import Router from './src/navigation/Router';
+export default function App() {
   return (
     <NavigationContainer>
-      <BottomNavigator />
+      <Router />
     </NavigationContainer>
   );
-};
-
-export default App;
+}
