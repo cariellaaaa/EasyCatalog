@@ -2,8 +2,10 @@ import 'react-native-gesture-handler';
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Home from '../screens/home';
-import { Home2 } from 'iconsax-react-native';
+import HomeScreen from '../screens/home';
+import ProductScreen from '../screens/product';
+import ProfileScreen from '../screens/profile';
+import { Home2, Profile, Shop } from 'iconsax-react-native';
 import colors from '../theme/colors';
 import fontType from '../theme/fonts';
 
@@ -32,11 +34,41 @@ function MainApp() {
             }}>
             <Tab.Screen
                 name="Home"
-                component={Home}
+                component={HomeScreen}
                 options={{
                     tabBarLabel: 'Home',
                     tabBarIcon: ({ focused, color }) => (
                         <Home2
+                            color={color}
+                            variant={focused ? 'Bold' : 'Linear'}
+                            size={24}
+                        />
+                    ),
+                    headerShown: false,
+                }}
+            />
+            <Tab.Screen
+                name="Product"
+                component={ProductScreen}
+                options={{
+                    tabBarLabel: 'Product',
+                    tabBarIcon: ({ focused, color }) => (
+                        <Shop
+                            color={color}
+                            variant={focused ? 'Bold' : 'Linear'}
+                            size={24}
+                        />
+                    ),
+                    headerShown: false,
+                }}
+            />
+            <Tab.Screen
+                name="Profile"
+                component={ProfileScreen}
+                options={{
+                    tabBarLabel: 'Product',
+                    tabBarIcon: ({ focused, color }) => (
+                        <Profile
                             color={color}
                             variant={focused ? 'Bold' : 'Linear'}
                             size={24}
