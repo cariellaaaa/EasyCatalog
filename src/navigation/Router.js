@@ -5,6 +5,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from '../screens/home';
 import ProductScreen from '../screens/product';
 import ProfileScreen from '../screens/profile';
+import AddProductForm from '../screens/addproductform';
+
 import { Home2, Profile, Shop } from 'iconsax-react-native';
 import colors from '../theme/colors';
 import fontType from '../theme/fonts';
@@ -97,6 +99,11 @@ const Router = () => {
             <Stack.Screen
                 name="MainApp"
                 component={MainApp}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="AddProductForm"
+                component={AddProductForm}
                 options={{ headerShown: false }}
             />
         </Stack.Navigator>
