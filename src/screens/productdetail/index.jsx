@@ -18,7 +18,7 @@ const ProductDetail = ({ route, navigation }) => {
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView>
-                {/* Header */}
+                {/* Header dengan tombol back dan wishlist */}
                 <View style={styles.header}>
                     <TouchableOpacity
                         onPress={() => navigation.goBack()}
@@ -27,30 +27,50 @@ const ProductDetail = ({ route, navigation }) => {
                         <Icon name="arrow-left" size={24} color={colors.black()} />
                     </TouchableOpacity>
                     <Text style={styles.title}>Product Detail</Text>
-                    <View style={{ width: 24 }} />
+                    <TouchableOpacity style={styles.wishlistButton}>
+                        <Icon name="heart-outline" size={24} color={colors.black()} />
+                    </TouchableOpacity>
                 </View>
 
-                {/* Product Image */}
+                {/* Konten produk */}
                 <Image
-                    source={{ uri: product.image }}
+                    source={product.image}
                     style={styles.productImage}
                     resizeMode="cover"
                 />
 
-                {/* Product Info */}
+                {/* Info produk */}
                 <View style={styles.infoSection}>
-                    <Text style={styles.productName}>{product.name}</Text>
-                    <Text style={styles.productPrice}>${product.price}</Text>
-                    <Text style={styles.label}>Category:</Text>
-                    <Text style={styles.text}>{product.category}</Text>
+                    <View style={styles.titleRow}>
+                        <Text style={styles.productName}>{product.name}</Text>
+                        <Text style={styles.productPrice}>${product.price}</Text>
+                    </View>
 
-                    <Text style={styles.label}>Stock:</Text>
-                    <Text style={styles.text}>{product.stock} pcs</Text>
+                    <View style={styles.metaContainer}>
+                        <View style={styles.metaItem}>
+                            <Icon name="tag-outline" size={18} color={colors.darkGray()} />
+                            <Text style={styles.metaText}>{product.category}</Text>
+                        </View>
+                        <View style={styles.metaItem}>
+                            <Icon name="package-variant" size={18} color={colors.darkGray()} />
+                            <Text style={styles.metaText}>{product.stock} in stock</Text>
+                        </View>
+                    </View>
 
-                    <Text style={styles.label}>Description:</Text>
-                    <Text style={styles.text}>{product.description}</Text>
+                    <Text style={styles.sectionTitle}>Description</Text>
+                    <Text style={styles.description}>{product.description}</Text>
                 </View>
             </ScrollView>
+
+            {/* Footer dengan tombol beli */}
+            <View style={styles.footer}>
+                <TouchableOpacity style={styles.cartButton}>
+                    <Icon name="cart-outline" size={20} color={colors.white()} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.buyButton}>
+                    <Text style={styles.buyButtonText}>Buy Now</Text>
+                </TouchableOpacity>
+            </View>
         </SafeAreaView>
     );
 };
@@ -107,6 +127,70 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontFamily: fontType['ms-Regular'],
         color: colors.black(),
+    },
+    wishlistButton: {
+        padding: 5,
+    },
+    titleRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 15,
+    },
+    metaContainer: {
+        flexDirection: 'row',
+        gap: 20,
+        marginBottom: 20,
+    },
+    metaItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+    },
+    metaText: {
+        fontSize: 14,
+        color: colors.darkGray(),
+        fontFamily: fontType['ms-Regular'],
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontFamily: fontType['ms-SemiBold'],
+        color: colors.black(),
+        marginBottom: 10,
+    },
+    description: {
+        fontSize: 14,
+        lineHeight: 22,
+        color: colors.darkGray(),
+        fontFamily: fontType['ms-Regular'],
+    },
+    footer: {
+        flexDirection: 'row',
+        padding: 15,
+        backgroundColor: colors.white(),
+        borderTopWidth: 1,
+        borderTopColor: colors.lightGray(),
+    },
+    cartButton: {
+        backgroundColor: colors.green(),
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 10,
+    },
+    buyButton: {
+        flex: 1,
+        backgroundColor: colors.green(),
+        borderRadius: 25,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    buyButtonText: {
+        color: colors.white(),
+        fontFamily: fontType['ms-SemiBold'],
+        fontSize: 16,
     },
 });
 
