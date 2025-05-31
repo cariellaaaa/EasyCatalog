@@ -6,6 +6,7 @@ import HomeScreen from '../screens/home';
 import ProductScreen from '../screens/product';
 import ProfileScreen from '../screens/profile';
 import AddProductForm from '../screens/addproductform';
+import ProductDetail from '../screens/productdetail';
 
 import { Home2, Profile, Shop } from 'iconsax-react-native';
 import colors from '../theme/colors';
@@ -104,6 +105,11 @@ const Router = () => {
             <Stack.Screen
                 name="AddProductForm"
                 component={AddProductForm}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="ProductDetail"
+                component={ProductDetail}
                 options={{ headerShown: false }}
             />
         </Stack.Navigator>

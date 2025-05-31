@@ -1,16 +1,24 @@
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { recommended } from '../constant/data';
+import { useNavigation } from '@react-navigation/native';
 import colors from '../theme/colors';
 import fontType from '../theme/fonts';
 
-const RecommendedItem = ({ item }) => (
-    <TouchableOpacity style={styles.item}>
-        <Image source={item.image} style={styles.image} />
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.price}>{item.price}</Text>
-    </TouchableOpacity>
-);
+const RecommendedItem = ({ item }) => {
+    const navigation = useNavigation();
+
+    return (
+        <TouchableOpacity
+            style={styles.item}
+            onPress={() => navigation.navigate('ProductDetail', { product: item })}
+        >
+            <Image source={item.image} style={styles.image} />
+            <Text style={styles.name}>{item.name}</Text>
+            <Text style={styles.price}>{item.price}</Text>
+        </TouchableOpacity>
+    );
+};
 
 export const RecommendedList = () => {
     return (

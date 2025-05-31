@@ -10,6 +10,7 @@ import {
     Easing
 } from 'react-native';
 import { products } from '../constant/data';
+import { useNavigation } from '@react-navigation/native';
 import colors from '../theme/colors';
 import fontType from '../theme/fonts';
 
@@ -18,6 +19,7 @@ const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 const ProductItem = ({ item, index }) => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const translateYAnim = useRef(new Animated.Value(50)).current;
+    const navigation = useNavigation();
 
     useEffect(() => {
         Animated.parallel([
@@ -47,6 +49,7 @@ const ProductItem = ({ item, index }) => {
                 }
             ]}
             activeOpacity={0.7}
+            onPress={() => navigation.navigate('ProductDetail', { product: item })}
         >
             <Image source={item.image} style={styles.image} />
             <Text style={styles.name}>{item.name}</Text>
