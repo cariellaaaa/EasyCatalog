@@ -7,6 +7,7 @@ import ProductScreen from '../screens/product';
 import ProfileScreen from '../screens/profile';
 import AddProductForm from '../screens/addproductform';
 import ProductDetail from '../screens/productdetail';
+import EditProduct from '../screens/editproductform';
 
 import { Home2, Profile, Shop } from 'iconsax-react-native';
 import colors from '../theme/colors';
@@ -88,11 +89,11 @@ const Router = () => {
     return (
         <Stack.Navigator
             screenOptions={{
-                cardStyle: { backgroundColor: colors.white() }, // Background stack
+                cardStyle: { backgroundColor: colors.white() },
                 headerStyle: {
-                    backgroundColor: colors.green(), // Warna header
+                    backgroundColor: colors.green(),
                 },
-                headerTintColor: colors.white(), // Warna teks header
+                headerTintColor: colors.white(),
                 headerTitleStyle: {
                     fontFamily: fontType['ms-SemiBold'],
                 },
@@ -110,6 +111,11 @@ const Router = () => {
             <Stack.Screen
                 name="ProductDetail"
                 component={ProductDetail}
+                options={{ headerShown: false }}
+            />
+            <Stack.Screen
+                name="EditProduct"
+                component={EditProduct}
                 options={{ headerShown: false }}
             />
         </Stack.Navigator>

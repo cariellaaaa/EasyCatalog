@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -7,9 +7,11 @@ import {
     Image,
     StyleSheet,
     Animated,
-    Easing
+    Easing,
+    RefreshControl,
+    ActivityIndicator
 } from 'react-native';
-import { products } from '../constant/data';
+import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import colors from '../theme/colors';
 import fontType from '../theme/fonts';
@@ -51,15 +53,39 @@ const ProductItem = ({ item, index }) => {
             activeOpacity={0.7}
             onPress={() => navigation.navigate('ProductDetail', { product: item })}
         >
-            <Image source={item.image} style={styles.image} />
-            <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.price}>{item.price}</Text>
+            <Image
+                source={{ uri: item.image || 'https://placehold.co/400?text=No+Image' }}
+                style={styles.image}
+                onError={(e) => console.log('Failed to load image:', e.nativeEvent.error)}
+                resizeMode="cover"
+            />
+            <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
+            <Text style={styles.price}>${item.price}</Text>
         </AnimatedTouchable>
     );
 };
 
 export const ProductGrid = () => {
     const scaleAnim = useRef(new Animated.Value(0.9)).current;
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const fetchProducts = async () => {
+        try {
+            const response = await axios.get('https://68346376464b49963602974c.mockapi.io/api/pruducts');
+            console.log('Products data:', response.data); // Debug data
+            setProducts(response.data);
+            setError(null);
+        } catch (err) {
+            console.error('Error fetching products:', err);
+            setError(err.message);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    };
 
     useEffect(() => {
         Animated.spring(scaleAnim, {
@@ -67,7 +93,36 @@ export const ProductGrid = () => {
             friction: 4,
             useNativeDriver: true,
         }).start();
-    }, [scaleAnim]);
+
+        fetchProducts();
+    }, []);
+
+    const onRefresh = () => {
+        setRefreshing(true);
+        fetchProducts();
+    };
+
+    if (loading && !refreshing) {
+        return (
+            <View style={[styles.loadingContainer]}>
+                <ActivityIndicator size="large" color={colors.green()} />
+            </View>
+        );
+    }
+
+    if (error) {
+        return (
+            <View style={[styles.errorContainer]}>
+                <Text style={styles.errorText}>Error: {error}</Text>
+                <TouchableOpacity
+                    style={styles.retryButton}
+                    onPress={fetchProducts}
+                >
+                    <Text style={styles.retryText}>Retry</Text>
+                </TouchableOpacity>
+            </View>
+        );
+    }
 
     return (
         <Animated.View style={[styles.container, { transform: [{ scale: scaleAnim }] }]}>
@@ -77,6 +132,7 @@ export const ProductGrid = () => {
                     <Text style={styles.seeAll}>See All</Text>
                 </TouchableOpacity>
             </View>
+
             <FlatList
                 data={products}
                 numColumns={2}
@@ -84,6 +140,18 @@ export const ProductGrid = () => {
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={({ item, index }) => <ProductItem item={item} index={index} />}
                 scrollEnabled={false}
+                ListEmptyComponent={
+                    <View style={styles.emptyContainer}>
+                        <Text style={styles.emptyText}>No products found</Text>
+                    </View>
+                }
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        colors={[colors.green()]}
+                    />
+                }
             />
         </Animated.View>
     );
@@ -121,6 +189,7 @@ const styles = StyleSheet.create({
         width: '100%',
         height: 150,
         borderRadius: 10,
+        backgroundColor: colors.lightGray(0.2),
     },
     name: {
         fontFamily: fontType['ms-SemiBold'],
@@ -129,6 +198,41 @@ const styles = StyleSheet.create({
     price: {
         fontFamily: fontType['ms-Medium'],
         color: colors.peach(),
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    errorContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    errorText: {
+        color: colors.red(),
+        fontFamily: fontType['ms-Medium'],
+        marginBottom: 10,
+    },
+    retryButton: {
+        padding: 10,
+        backgroundColor: colors.green(),
+        borderRadius: 5,
+    },
+    retryText: {
+        color: colors.white(),
+        fontFamily: fontType['ms-Medium'],
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    emptyText: {
+        color: colors.gray(),
+        fontFamily: fontType['ms-Medium'],
     },
 });
 

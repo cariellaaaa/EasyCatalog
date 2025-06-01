@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     SafeAreaView,
     ScrollView,
@@ -8,16 +8,17 @@ import {
     TouchableOpacity,
     StyleSheet,
     Image,
-    ActivityIndicator,
-    Alert
+    Alert,
+    ActivityIndicator
 } from 'react-native';
-import { launchImageLibrary } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { launchImageLibrary } from 'react-native-image-picker';
 import axios from 'axios';
 import colors from '../../theme/colors';
 import fontType from '../../theme/fonts';
 
-const AddProductForm = ({ navigation }) => {
+const EditProduct = ({ route, navigation }) => {
+    const { productId } = route.params;
     const [formData, setFormData] = useState({
         name: '',
         price: '',
@@ -26,63 +27,59 @@ const AddProductForm = ({ navigation }) => {
         stock: '',
         image: null
     });
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [updating, setUpdating] = useState(false);
 
-    const selectImage = () => {
-        launchImageLibrary(
-            {
+    useEffect(() => {
+        const fetchProduct = async () => {
+            try {
+                const response = await axios.get(
+                    `https://68346376464b49963602974c.mockapi.io/api/pruducts/${productId}`
+                );
+                const product = response.data;
+                setFormData({
+                    name: product.name,
+                    price: product.price.toString(),
+                    description: product.description,
+                    category: product.category,
+                    stock: product.stock.toString(),
+                    image: { uri: product.image || 'https://placehold.co/400' }
+                });
+            } catch (error) {
+                Alert.alert('Error', 'Failed to load product data');
+                navigation.goBack();
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProduct();
+    }, [productId]);
+
+    const selectImage = async () => {
+        try {
+            const result = await launchImageLibrary({
                 mediaType: 'photo',
                 quality: 0.8,
-            },
-            (response) => {
-                if (!response.didCancel && !response.errorCode) {
-                    setFormData({
-                        ...formData,
-                        image: {
-                            uri: response.assets[0].uri,
-                            name: response.assets[0].fileName,
-                            type: response.assets[0].type
-                        }
-                    });
-                }
+                maxWidth: 800,
+                maxHeight: 800
+            });
+
+            if (!result.didCancel && !result.errorCode) {
+                const selectedImage = result.assets[0];
+                setFormData({
+                    ...formData,
+                    image: {
+                        uri: selectedImage.uri,
+                        name: selectedImage.fileName,
+                        type: selectedImage.type
+                    }
+                });
             }
-        );
-    };
-
-    const validateForm = () => {
-        if (!formData.name.trim()) {
-            Alert.alert('Error', 'Product name is required');
-            return false;
+        } catch (error) {
+            console.error('Image picker error:', error);
+            Alert.alert('Error', 'Failed to select image');
         }
-        if (!formData.price || isNaN(parseFloat(formData.price))) {
-            Alert.alert('Error', 'Please enter a valid price');
-            return false;
-        }
-        if (!formData.category.trim()) {
-            Alert.alert('Error', 'Category is required');
-            return false;
-        }
-        return true;
-    };
-
-    const uploadImage = async (imageUri) => {
-        const formData = new FormData();
-        formData.append('image', {
-            uri: imageUri,
-            name: 'product_image.jpg',
-            type: 'image/jpeg'
-        });
-
-        const response = await axios.post(
-            'https://your-api-upload-endpoint.com/upload',
-            formData,
-            {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            }
-        );
-        return response.data.imageUrl;
     };
 
     const handleSubmit = async () => {
@@ -92,7 +89,7 @@ const AddProductForm = ({ navigation }) => {
             return;
         }
 
-        setLoading(true);
+        setUpdating(true);
 
         try {
             const productData = {
@@ -101,30 +98,71 @@ const AddProductForm = ({ navigation }) => {
                 description: formData.description,
                 category: formData.category,
                 stock: parseInt(formData.stock) || 0,
-                image: formData.image?.uri || 'https://via.placeholder.com/300',
-                createdAt: new Date().toISOString()
+                image: formData.image?.uri || 'https://placehold.co/400',
+                updatedAt: new Date().toISOString()
             };
 
-            const response = await axios.post(
-                'https://68346376464b49963602974c.mockapi.io/api/pruducts',
+            const response = await axios.put(
+                `https://68346376464b49963602974c.mockapi.io/api/pruducts/${productId}`,
                 productData
             );
 
-            if (response.status === 201) {
-                Alert.alert('Success', 'Product added successfully', [
-                    {
-                        text: 'OK',
-                        onPress: () => navigation.goBack()
-                    }
+            if (response.status === 200) {
+                Alert.alert('Success', 'Product updated successfully', [
+                    { text: 'OK', onPress: () => navigation.goBack() }
                 ]);
             }
         } catch (error) {
-            console.error('Error adding product:', error);
-            Alert.alert('Error', 'Failed to add product. Please try again.');
+            console.error('Error updating product:', error);
+            Alert.alert('Error', 'Failed to update product. Please try again.');
         } finally {
-            setLoading(false);
+            setUpdating(false);
         }
     };
+
+    const handleDelete = async () => {
+        Alert.alert(
+            'Confirm Delete',
+            'Are you sure you want to delete this product?',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel'
+                },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setUpdating(true);
+                            const response = await axios.delete(
+                                `https://68346376464b49963602974c.mockapi.io/api/pruducts/${productId}`
+                            );
+
+                            if (response.status === 200) {
+                                Alert.alert('Success', 'Product deleted successfully', [
+                                    { text: 'OK', onPress: () => navigation.goBack() }
+                                ]);
+                            }
+                        } catch (error) {
+                            console.error('Error deleting product:', error);
+                            Alert.alert('Error', 'Failed to delete product. Please try again.');
+                        } finally {
+                            setUpdating(false);
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    if (loading) {
+        return (
+            <SafeAreaView style={[styles.container, styles.centerContainer]}>
+                <ActivityIndicator size="large" color={colors.green()} />
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -137,7 +175,7 @@ const AddProductForm = ({ navigation }) => {
                     >
                         <Icon name="arrow-left" size={24} color={colors.black()} />
                     </TouchableOpacity>
-                    <Text style={styles.title}>Add New Product</Text>
+                    <Text style={styles.title}>Edit Product</Text>
                     <View style={{ width: 24 }} />
                 </View>
 
@@ -149,14 +187,14 @@ const AddProductForm = ({ navigation }) => {
                     >
                         {formData.image ? (
                             <Image
-                                source={formData.image}
+                                source={{ uri: formData.image.uri }}
                                 style={styles.imagePreview}
                                 resizeMode="cover"
                             />
                         ) : (
                             <View style={styles.imagePlaceholder}>
                                 <Icon name="image-plus" size={40} color={colors.gray()} />
-                                <Text style={styles.uploadText}>Upload Product Image</Text>
+                                <Text style={styles.uploadText}>Change Product Image</Text>
                                 <Text style={styles.uploadHint}>Recommended size: 800x800px</Text>
                             </View>
                         )}
@@ -242,17 +280,26 @@ const AddProductForm = ({ navigation }) => {
                     </View>
                 </View>
 
-                {/* Submit Button */}
+                {/* Update Button */}
                 <TouchableOpacity
                     style={styles.submitButton}
                     onPress={handleSubmit}
-                    disabled={loading}
+                    disabled={updating}
                 >
-                    {loading ? (
+                    {updating ? (
                         <ActivityIndicator color={colors.white()} />
                     ) : (
-                        <Text style={styles.submitText}>Save Product</Text>
+                        <Text style={styles.submitText}>Update Product</Text>
                     )}
+                </TouchableOpacity>
+
+                {/* Delete Button */}
+                <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={handleDelete}
+                    disabled={updating}
+                >
+                    <Text style={styles.deleteText}>Delete Product</Text>
                 </TouchableOpacity>
             </ScrollView>
         </SafeAreaView>
@@ -263,6 +310,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.white(),
+    },
+    centerContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     scrollContainer: {
         paddingBottom: 30,
@@ -384,6 +435,22 @@ const styles = StyleSheet.create({
         fontFamily: fontType['ms-SemiBold'],
         fontSize: 16,
     },
+    deleteButton: {
+        backgroundColor: colors.red(0.1),
+        borderRadius: 8,
+        padding: 16,
+        marginHorizontal: 20,
+        marginTop: 10,
+        marginBottom: 20,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: colors.red(),
+    },
+    deleteText: {
+        color: colors.red(),
+        fontFamily: fontType['ms-SemiBold'],
+        fontSize: 16,
+    },
 });
 
-export default AddProductForm;
+export default EditProduct;
