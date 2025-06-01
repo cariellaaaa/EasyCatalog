@@ -8,13 +8,14 @@ import {
     TouchableOpacity,
     StyleSheet,
     Image,
-    Alert
+    Alert,
+    ActivityIndicator
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { updateProduct, getProductById } from '../../services/api';
+import { launchImageLibrary } from 'react-native-image-picker';
+import axios from 'axios';
 import colors from '../../theme/colors';
 import fontType from '../../theme/fonts';
-import axios from 'axios';
 
 const EditProduct = ({ route, navigation }) => {
     const { productId } = route.params;
@@ -27,11 +28,15 @@ const EditProduct = ({ route, navigation }) => {
         image: null
     });
     const [loading, setLoading] = useState(true);
+    const [updating, setUpdating] = useState(false);
 
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const product = await getProductById(productId);
+                const response = await axios.get(
+                    `https://68346376464b49963602974c.mockapi.io/api/pruducts/${productId}`
+                );
+                const product = response.data;
                 setFormData({
                     name: product.name,
                     price: product.price.toString(),
@@ -40,40 +45,121 @@ const EditProduct = ({ route, navigation }) => {
                     stock: product.stock.toString(),
                     image: { uri: product.image || 'https://placehold.co/400' }
                 });
-                setLoading(false);
             } catch (error) {
                 Alert.alert('Error', 'Failed to load product data');
                 navigation.goBack();
+            } finally {
+                setLoading(false);
             }
         };
 
         fetchProduct();
     }, [productId]);
 
-    const selectImage = () => {
-        // In a real app, implement image picker here
-        Alert.alert('Info', 'Image picker would open here');
+    const selectImage = async () => {
+        try {
+            const result = await launchImageLibrary({
+                mediaType: 'photo',
+                quality: 0.8,
+                maxWidth: 800,
+                maxHeight: 800
+            });
+
+            if (!result.didCancel && !result.errorCode) {
+                const selectedImage = result.assets[0];
+                setFormData({
+                    ...formData,
+                    image: {
+                        uri: selectedImage.uri,
+                        name: selectedImage.fileName,
+                        type: selectedImage.type
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Image picker error:', error);
+            Alert.alert('Error', 'Failed to select image');
+        }
     };
 
     const handleSubmit = async () => {
-        try {
-            await updateProduct(productId, {
-                ...formData,
-                price: parseFloat(formData.price),
-                stock: parseInt(formData.stock)
-            });
-            Alert.alert('Success', 'Product updated successfully', [
-                { text: 'OK', onPress: () => navigation.goBack() }
-            ]);
-        } catch (error) {
-            Alert.alert('Error', 'Failed to update product');
+        // Validasi form
+        if (!formData.name || !formData.price || !formData.category) {
+            Alert.alert('Error', 'Please fill in all required fields');
+            return;
         }
+
+        setUpdating(true);
+
+        try {
+            const productData = {
+                name: formData.name,
+                price: parseFloat(formData.price),
+                description: formData.description,
+                category: formData.category,
+                stock: parseInt(formData.stock) || 0,
+                image: formData.image?.uri || 'https://placehold.co/400',
+                updatedAt: new Date().toISOString()
+            };
+
+            const response = await axios.put(
+                `https://68346376464b49963602974c.mockapi.io/api/pruducts/${productId}`,
+                productData
+            );
+
+            if (response.status === 200) {
+                Alert.alert('Success', 'Product updated successfully', [
+                    { text: 'OK', onPress: () => navigation.goBack() }
+                ]);
+            }
+        } catch (error) {
+            console.error('Error updating product:', error);
+            Alert.alert('Error', 'Failed to update product. Please try again.');
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        Alert.alert(
+            'Confirm Delete',
+            'Are you sure you want to delete this product?',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel'
+                },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setUpdating(true);
+                            const response = await axios.delete(
+                                `https://68346376464b49963602974c.mockapi.io/api/pruducts/${productId}`
+                            );
+
+                            if (response.status === 200) {
+                                Alert.alert('Success', 'Product deleted successfully', [
+                                    { text: 'OK', onPress: () => navigation.goBack() }
+                                ]);
+                            }
+                        } catch (error) {
+                            console.error('Error deleting product:', error);
+                            Alert.alert('Error', 'Failed to delete product. Please try again.');
+                        } finally {
+                            setUpdating(false);
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     if (loading) {
         return (
-            <SafeAreaView style={styles.container}>
-                <Text>Loading...</Text>
+            <SafeAreaView style={[styles.container, styles.centerContainer]}>
+                <ActivityIndicator size="large" color={colors.green()} />
             </SafeAreaView>
         );
     }
@@ -101,7 +187,7 @@ const EditProduct = ({ route, navigation }) => {
                     >
                         {formData.image ? (
                             <Image
-                                source={formData.image}
+                                source={{ uri: formData.image.uri }}
                                 style={styles.imagePreview}
                                 resizeMode="cover"
                             />
@@ -194,20 +280,40 @@ const EditProduct = ({ route, navigation }) => {
                     </View>
                 </View>
 
-                {/* Submit Button */}
-                <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-                    <Text style={styles.submitText}>Update Product</Text>
+                {/* Update Button */}
+                <TouchableOpacity
+                    style={styles.submitButton}
+                    onPress={handleSubmit}
+                    disabled={updating}
+                >
+                    {updating ? (
+                        <ActivityIndicator color={colors.white()} />
+                    ) : (
+                        <Text style={styles.submitText}>Update Product</Text>
+                    )}
+                </TouchableOpacity>
+
+                {/* Delete Button */}
+                <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={handleDelete}
+                    disabled={updating}
+                >
+                    <Text style={styles.deleteText}>Delete Product</Text>
                 </TouchableOpacity>
             </ScrollView>
         </SafeAreaView>
     );
 };
 
-// Reuse the same styles from AddProductForm
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.white(),
+    },
+    centerContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     scrollContainer: {
         paddingBottom: 30,
@@ -326,6 +432,22 @@ const styles = StyleSheet.create({
     },
     submitText: {
         color: colors.white(),
+        fontFamily: fontType['ms-SemiBold'],
+        fontSize: 16,
+    },
+    deleteButton: {
+        backgroundColor: colors.red(0.1),
+        borderRadius: 8,
+        padding: 16,
+        marginHorizontal: 20,
+        marginTop: 10,
+        marginBottom: 20,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: colors.red(),
+    },
+    deleteText: {
+        color: colors.red(),
         fontFamily: fontType['ms-SemiBold'],
         fontSize: 16,
     },

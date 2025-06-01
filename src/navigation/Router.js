@@ -89,11 +89,11 @@ const Router = () => {
     return (
         <Stack.Navigator
             screenOptions={{
-                cardStyle: { backgroundColor: colors.white() }, // Background stack
+                cardStyle: { backgroundColor: colors.white() },
                 headerStyle: {
-                    backgroundColor: colors.green(), // Warna header
+                    backgroundColor: colors.green(),
                 },
-                headerTintColor: colors.white(), // Warna teks header
+                headerTintColor: colors.white(),
                 headerTitleStyle: {
                     fontFamily: fontType['ms-SemiBold'],
                 },
@@ -113,11 +113,11 @@ const Router = () => {
                 component={ProductDetail}
                 options={{ headerShown: false }}
             />
-            {/* <Stack.Screen
+            <Stack.Screen
                 name="EditProduct"
                 component={EditProduct}
                 options={{ headerShown: false }}
-            /> */}
+            />
         </Stack.Navigator>
     );
 };
