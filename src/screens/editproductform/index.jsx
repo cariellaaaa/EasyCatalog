@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     SafeAreaView,
     ScrollView,
@@ -8,16 +8,16 @@ import {
     TouchableOpacity,
     StyleSheet,
     Image,
-    ActivityIndicator,
     Alert
 } from 'react-native';
-import { launchImageLibrary } from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import axios from 'axios';
+import { updateProduct, getProductById } from '../../services/api';
 import colors from '../../theme/colors';
 import fontType from '../../theme/fonts';
+import axios from 'axios';
 
-const AddProductForm = ({ navigation }) => {
+const EditProduct = ({ route, navigation }) => {
+    const { productId } = route.params;
     const [formData, setFormData] = useState({
         name: '',
         price: '',
@@ -26,105 +26,57 @@ const AddProductForm = ({ navigation }) => {
         stock: '',
         image: null
     });
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchProduct = async () => {
+            try {
+                const product = await getProductById(productId);
+                setFormData({
+                    name: product.name,
+                    price: product.price.toString(),
+                    description: product.description,
+                    category: product.category,
+                    stock: product.stock.toString(),
+                    image: { uri: product.image || 'https://placehold.co/400' }
+                });
+                setLoading(false);
+            } catch (error) {
+                Alert.alert('Error', 'Failed to load product data');
+                navigation.goBack();
+            }
+        };
+
+        fetchProduct();
+    }, [productId]);
 
     const selectImage = () => {
-        launchImageLibrary(
-            {
-                mediaType: 'photo',
-                quality: 0.8,
-            },
-            (response) => {
-                if (!response.didCancel && !response.errorCode) {
-                    setFormData({
-                        ...formData,
-                        image: {
-                            uri: response.assets[0].uri,
-                            name: response.assets[0].fileName,
-                            type: response.assets[0].type
-                        }
-                    });
-                }
-            }
-        );
-    };
-
-    const validateForm = () => {
-        if (!formData.name.trim()) {
-            Alert.alert('Error', 'Product name is required');
-            return false;
-        }
-        if (!formData.price || isNaN(parseFloat(formData.price))) {
-            Alert.alert('Error', 'Please enter a valid price');
-            return false;
-        }
-        if (!formData.category.trim()) {
-            Alert.alert('Error', 'Category is required');
-            return false;
-        }
-        return true;
-    };
-
-    const uploadImage = async (imageUri) => {
-        const formData = new FormData();
-        formData.append('image', {
-            uri: imageUri,
-            name: 'product_image.jpg',
-            type: 'image/jpeg'
-        });
-
-        const response = await axios.post(
-            'https://your-api-upload-endpoint.com/upload',
-            formData,
-            {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            }
-        );
-        return response.data.imageUrl;
+        // In a real app, implement image picker here
+        Alert.alert('Info', 'Image picker would open here');
     };
 
     const handleSubmit = async () => {
-        // Validasi form
-        if (!formData.name || !formData.price || !formData.category) {
-            Alert.alert('Error', 'Please fill in all required fields');
-            return;
-        }
-
-        setLoading(true);
-
         try {
-            const productData = {
-                name: formData.name,
+            await updateProduct(productId, {
+                ...formData,
                 price: parseFloat(formData.price),
-                description: formData.description,
-                category: formData.category,
-                stock: parseInt(formData.stock) || 0,
-                image: formData.image?.uri || 'https://via.placeholder.com/300',
-                createdAt: new Date().toISOString()
-            };
-
-            const response = await axios.post(
-                'https://68346376464b49963602974c.mockapi.io/api/pruducts',
-                productData
-            );
-
-            if (response.status === 201) {
-                Alert.alert('Success', 'Product added successfully', [
-                    {
-                        text: 'OK',
-                        onPress: () => navigation.goBack()
-                    }
-                ]);
-            }
+                stock: parseInt(formData.stock)
+            });
+            Alert.alert('Success', 'Product updated successfully', [
+                { text: 'OK', onPress: () => navigation.goBack() }
+            ]);
         } catch (error) {
-            console.error('Error adding product:', error);
-            Alert.alert('Error', 'Failed to add product. Please try again.');
-        } finally {
-            setLoading(false);
+            Alert.alert('Error', 'Failed to update product');
         }
     };
+
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <Text>Loading...</Text>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -137,7 +89,7 @@ const AddProductForm = ({ navigation }) => {
                     >
                         <Icon name="arrow-left" size={24} color={colors.black()} />
                     </TouchableOpacity>
-                    <Text style={styles.title}>Add New Product</Text>
+                    <Text style={styles.title}>Edit Product</Text>
                     <View style={{ width: 24 }} />
                 </View>
 
@@ -156,7 +108,7 @@ const AddProductForm = ({ navigation }) => {
                         ) : (
                             <View style={styles.imagePlaceholder}>
                                 <Icon name="image-plus" size={40} color={colors.gray()} />
-                                <Text style={styles.uploadText}>Upload Product Image</Text>
+                                <Text style={styles.uploadText}>Change Product Image</Text>
                                 <Text style={styles.uploadHint}>Recommended size: 800x800px</Text>
                             </View>
                         )}
@@ -243,22 +195,15 @@ const AddProductForm = ({ navigation }) => {
                 </View>
 
                 {/* Submit Button */}
-                <TouchableOpacity
-                    style={styles.submitButton}
-                    onPress={handleSubmit}
-                    disabled={loading}
-                >
-                    {loading ? (
-                        <ActivityIndicator color={colors.white()} />
-                    ) : (
-                        <Text style={styles.submitText}>Save Product</Text>
-                    )}
+                <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+                    <Text style={styles.submitText}>Update Product</Text>
                 </TouchableOpacity>
             </ScrollView>
         </SafeAreaView>
     );
 };
 
+// Reuse the same styles from AddProductForm
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -386,4 +331,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default AddProductForm;
+export default EditProduct;

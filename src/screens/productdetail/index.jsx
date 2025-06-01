@@ -1,3 +1,4 @@
+// src/screens/ProductDetail.jsx
 import React from 'react';
 import {
     SafeAreaView,
@@ -11,6 +12,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import colors from '../../theme/colors';
 import fontType from '../../theme/fonts';
+import axios from 'axios';
 
 const ProductDetail = ({ route, navigation }) => {
     const { product } = route.params;
@@ -18,7 +20,7 @@ const ProductDetail = ({ route, navigation }) => {
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView>
-                {/* Header dengan tombol back dan wishlist */}
+                {/* Header */}
                 <View style={styles.header}>
                     <TouchableOpacity
                         onPress={() => navigation.goBack()}
@@ -27,24 +29,20 @@ const ProductDetail = ({ route, navigation }) => {
                         <Icon name="arrow-left" size={24} color={colors.black()} />
                     </TouchableOpacity>
                     <Text style={styles.title}>Product Detail</Text>
-                    <TouchableOpacity style={styles.wishlistButton}>
-                        <Icon name="heart-outline" size={24} color={colors.black()} />
-                    </TouchableOpacity>
+                    <View style={{ width: 24 }} />
                 </View>
 
-                {/* Konten produk */}
+                {/* Product Image */}
                 <Image
-                    source={product.image}
+                    source={{ uri: product.image || 'https://placehold.co/400' }}
                     style={styles.productImage}
                     resizeMode="cover"
                 />
 
-                {/* Info produk */}
+                {/* Product Info */}
                 <View style={styles.infoSection}>
-                    <View style={styles.titleRow}>
-                        <Text style={styles.productName}>{product.name}</Text>
-                        <Text style={styles.productPrice}>${product.price}</Text>
-                    </View>
+                    <Text style={styles.productName}>{product.name}</Text>
+                    <Text style={styles.productPrice}>${product.price}</Text>
 
                     <View style={styles.metaContainer}>
                         <View style={styles.metaItem}>
@@ -62,15 +60,13 @@ const ProductDetail = ({ route, navigation }) => {
                 </View>
             </ScrollView>
 
-            {/* Footer dengan tombol beli */}
-            <View style={styles.footer}>
-                <TouchableOpacity style={styles.cartButton}>
-                    <Icon name="cart-outline" size={20} color={colors.white()} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.buyButton}>
-                    <Text style={styles.buyButtonText}>Buy Now</Text>
-                </TouchableOpacity>
-            </View>
+            {/* Floating Edit Button */}
+            <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => navigation.navigate('EditProduct', { productId: product.id })}
+            >
+                <Icon name="pencil" size={24} color={colors.white()} />
+            </TouchableOpacity>
         </SafeAreaView>
     );
 };
@@ -97,45 +93,24 @@ const styles = StyleSheet.create({
     },
     productImage: {
         width: '100%',
-        height: 250,
-        borderRadius: 12,
+        height: 300,
         marginBottom: 20,
     },
     infoSection: {
         paddingHorizontal: 20,
-        paddingBottom: 30,
+        paddingBottom: 100,
     },
     productName: {
         fontSize: 22,
         fontFamily: fontType['ms-SemiBold'],
         color: colors.black(),
-        marginBottom: 10,
+        marginBottom: 5,
     },
     productPrice: {
         fontSize: 20,
         fontFamily: fontType['ms-Medium'],
         color: colors.green(),
         marginBottom: 20,
-    },
-    label: {
-        fontSize: 14,
-        color: colors.darkGray(),
-        fontFamily: fontType['ms-Medium'],
-        marginTop: 10,
-    },
-    text: {
-        fontSize: 16,
-        fontFamily: fontType['ms-Regular'],
-        color: colors.black(),
-    },
-    wishlistButton: {
-        padding: 5,
-    },
-    titleRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 15,
     },
     metaContainer: {
         flexDirection: 'row',
@@ -164,33 +139,21 @@ const styles = StyleSheet.create({
         color: colors.darkGray(),
         fontFamily: fontType['ms-Regular'],
     },
-    footer: {
-        flexDirection: 'row',
-        padding: 15,
-        backgroundColor: colors.white(),
-        borderTopWidth: 1,
-        borderTopColor: colors.lightGray(),
-    },
-    cartButton: {
+    editButton: {
+        position: 'absolute',
+        right: 20,
+        bottom: 80, // Adjust based on your tab bar height
+        width: 56,
+        height: 56,
+        borderRadius: 28,
         backgroundColor: colors.green(),
-        width: 50,
-        height: 50,
-        borderRadius: 25,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 10,
-    },
-    buyButton: {
-        flex: 1,
-        backgroundColor: colors.green(),
-        borderRadius: 25,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    buyButtonText: {
-        color: colors.white(),
-        fontFamily: fontType['ms-SemiBold'],
-        fontSize: 16,
+        elevation: 5,
+        shadowColor: colors.black(),
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
     },
 });
 
